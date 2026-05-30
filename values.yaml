@@ -1,0 +1,59 @@
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 90
+
+service:
+  type: ClusterIP   # Changed from NodePort
+  port: 80          # The port the Ingress Controller will talk to internally
+  targetPort: 3000  # The actual port nodejsapp container listens on
+
+#ingress:
+#  enabled: true
+#  className: "nginx"
+#  hosts:
+#  - host: kizotick.cc
+#    paths:
+#      - path: /
+#        pathType: Prefix
+#  - host: www.kizotick.cc
+#    paths:
+#      - path: /
+#        pathType: Prefix
+#  tlsSecretName: "cloudflare-origin-tls"
+#  sslRedirect: "true"
+#  annotations: {}   # for extra annotations later
+
+gateway:
+  enabled: true
+  gatewayClassName: "envoy"
+  hosts:
+    - "kizotick.cc"
+    - "www.kizotick.cc"
+  tlsSecretName: "cloudflare-origin-tls"
+  tls:
+    certFile: "certs/cloudflare.crt"
+    keyFile: "certs/cloudflare.pem"
+
+image:
+  repository: "ghcr.io/kizotic/nodejsapp"
+  tag: latest
+  pullSecretName: ghcr-secret
+
+dockerConfigJson: "eyJhdXRocyI6eyJodHRwczovL2doY3IuaW8iOnsidXNlcm5hbWUiOiJraXpvdGljIiwicGFzc3dvcmQiOiJnaHBfNHlMak9xUHlxQVVYOUF2aWZadVF3ZjR4V2JEaWZSNE9wTnFQIiwiZW1haWwiOiJlbWFpbEB1bnVzZWQuY29tIiwiYXV0aCI6ImEybDZiM1JwWXpwbmFIQmZOSGxNYWs5eFVIbHhRVlZZT1VGMmFXWmFkVkYzWmpSNFYySkVhV1pTTkU5d1RuRlEifX19"
+
+database:
+  host: "10.30.1.215"
+  name: "shared_db"
+  user: "app_user"
+  pass: "a7654321"
+
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "50m"
+  limits:
+    memory: "256Mi"
+    cpu: "100m"

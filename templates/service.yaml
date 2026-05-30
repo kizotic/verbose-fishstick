@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-demodeploy
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ .Release.Name }}-nodejsapp
+  ports:
+    - port: {{ .Values.service.port | default 80 }}
+      targetPort: {{ .Values.service.targetPort | default 3000 }}
+      # Only include nodePort if the service type is NodePort
+      {{- if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}

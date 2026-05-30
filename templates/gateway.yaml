@@ -1,0 +1,80 @@
+{{- if .Values.gateway.enabled -}}
+---
+# ── Gateway: declares the L7 entry point and TLS termination ──────────────────
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Release.Name }}-gateway
+  namespace: {{ .Release.Namespace }}
+spec:
+  gatewayClassName: {{ .Values.gateway.gatewayClassName }}
+  listeners:
+
+  # Listener 1: HTTP (port 80) — only used to issue a 301 redirect to HTTPS
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same
+
+  # Listener 2: HTTPS (port 443) — terminates TLS using your Cloudflare origin cert
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - group: ""
+        kind: Secret
+        name: {{ .Values.gateway.tlsSecretName | quote }}
+    allowedRoutes:
+      namespaces:
+        from: Same
+
+---
+# ── HTTPRoute 1: HTTP → HTTPS redirect ───────────────────────────────────────
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Release.Name }}-httproute-redirect
+  namespace: {{ .Release.Namespace }}
+spec:
+  parentRefs:
+  - name: {{ .Release.Name }}-gateway
+    sectionName: http
+  hostnames:
+  {{- range .Values.gateway.hosts }}
+  - {{ . | quote }}
+  {{- end }}
+  rules:
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
+
+---
+# ── HTTPRoute 2: HTTPS → backend service ─────────────────────────────────────
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Release.Name }}-httproute
+  namespace: {{ .Release.Namespace }}
+spec:
+  parentRefs:
+  - name: {{ .Release.Name }}-gateway
+    sectionName: https
+  hostnames:
+  {{- range .Values.gateway.hosts }}
+  - {{ . | quote }}
+  {{- end }}
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: {{ .Release.Name }}-service
+      port: {{ .Values.service.port | default 80 }}
+{{- end }}

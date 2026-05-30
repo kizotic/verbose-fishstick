@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-demodeploy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-demodeploy
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-nodejsapp
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-nodejsapp
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecretName }}
+      containers:
+      - name: nodejsapp
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        env:
+        - name: "DB_HOST"
+          value: {{ .Values.database.host | quote }}
+        - name: "DB_NAME"
+          value: {{ .Values.database.name | quote }}
+        - name: "DB_USER"
+          value: {{ .Values.database.user | quote }}
+        - name: "DB_PASS"
+          value: {{ .Values.database.pass | quote }}
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote }}
+            cpu: {{ .Values.resources.requests.cpu | quote }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote }}
+            cpu: {{ .Values.resources.limits.cpu | quote }}
+        ports:
+        - containerPort: 3000
