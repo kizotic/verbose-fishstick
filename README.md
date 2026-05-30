@@ -8,7 +8,7 @@ Traffic flows from the external network through the L4 Load Balancer into the L7
 - A purchased domain
 - Kubernetes cluster (v1.30+)
 - Helm v3.x
-- HAProxy Ingress Controller (or equivalent L4 LB) installed
+- HAProxy (or equivalent L4 LB) installed
 - Envoy Gateway installed
 - Metrics Server installed (for Horizontal Pod Autoscaler)
 
